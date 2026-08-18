@@ -51,6 +51,21 @@ app.post("/api/services", (req, res) => {
   res.status(201).json(service);
 });
 
+app.get("/api/services/:id", (req, res) => {
+  const service = store.getServices().find((s) => s.id === req.params.id);
+  if (!service) {
+    return res.status(404).json({ error: "service not found" });
+  }
+  const history = store.getHistoryForService(service.id, 1);
+  const latest = history[history.length - 1] || null;
+  res.json({
+    ...service,
+    latestStatus: latest ? latest.status : "pending",
+    latestResponseTimeMs: latest ? latest.responseTimeMs : null,
+    uptimePercent: store.computeUptimePercent(service.id),
+  });
+});
+
 app.delete("/api/services/:id", (req, res) => {
   store.removeService(req.params.id);
   res.status(204).end();
